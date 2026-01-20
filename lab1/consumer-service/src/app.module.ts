@@ -3,6 +3,7 @@ import { HttpModule } from '@nestjs/axios';
 import { LoggerModule } from '@common/logger';
 import { ConfigModule } from '@common/config';
 import { ComputeModule } from './compute/compute.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -10,6 +11,7 @@ import { ComputeModule } from './compute/compute.module';
     LoggerModule.forRoot('ConsumerService'),
     HttpModule,
     ComputeModule,
+    HealthModule,
   ],
 })
 export class AppModule {}
