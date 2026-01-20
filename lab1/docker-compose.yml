@@ -12,6 +12,20 @@ services:
       - PORT=3001
     networks:
       - microservices-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3001/health",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   consumer-service:
     build:
@@ -24,9 +38,24 @@ services:
       - PORT=3000
       - PROVIDER_SERVICE_URL=http://provider-service:3001
     depends_on:
-      - provider-service
+      provider-service:
+        condition: service_healthy
     networks:
       - microservices-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/health",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 networks:
   microservices-network:
