@@ -11,7 +11,12 @@ export class ComputeService {
   constructor(private readonly logger: LoggerService) {}
 
   async compute(request: ComputeRequestDto): Promise<ComputeResponseDto> {
-    const startTime = Date.now();
+    this.logger.debug('Starting computation', {
+      taskType: request.taskType,
+      data: request.data,
+    });
+
+    const startTime = performance.now();
 
     let result: number;
 
@@ -32,11 +37,11 @@ export class ComputeService {
         result = request.data.reduce((acc, val) => acc + val, 0);
     }
 
-    const computationTimeMs = Date.now() - startTime;
+    const computationTimeMs = performance.now() - startTime;
 
-    this.logger.log('Computation completed', {
+    this.logger.debug('Computation completed', {
       taskType: request.taskType,
-      dataLength: request.data.length,
+      data: request.data,
       result,
       computationTimeMs,
     });
@@ -50,13 +55,6 @@ export class ComputeService {
 
   private fibonacci(n: number): number {
     if (n <= 1) return n;
-    let a = 0,
-      b = 1;
-    for (let i = 2; i <= n; i++) {
-      const temp = a + b;
-      a = b;
-      b = temp;
-    }
-    return b;
+    return this.fibonacci(n - 1) + this.fibonacci(n - 2);
   }
 }

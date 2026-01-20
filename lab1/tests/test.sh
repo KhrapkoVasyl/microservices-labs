@@ -36,20 +36,32 @@ wait_for_service "http://localhost:3001/health" "Provider Service"
 wait_for_service "http://localhost:3000/health" "Consumer Service"
 echo "All services are ready!"
 
+get_time_ms() {
+  python3 -c 'import time; print(int(time.time()*1000))'
+}
+
 echo ""
 echo "=== Test 1: Single POW request ==="
 echo "Request: POW [2, 3, 2]"
-curl -s -X POST http://localhost:3000/compute \
+e2e_start=$(get_time_ms)
+response=$(curl -s -X POST http://localhost:3000/compute \
   -H "Content-Type: application/json" \
-  -d '{"taskType": "pow", "data": [2, 3, 2]}' | jq .
+  -d '{"taskType": "pow", "data": [2, 3, 2]}')
+e2e_end=$(get_time_ms)
+e2e_time=$((e2e_end - e2e_start))
+echo "$response" | jq --arg e2e "$e2e_time" '. + {e2eTimeMs: ($e2e | tonumber)}'
 echo ""
 
 echo "=== Test 2: 20 Fibonacci requests ==="
 for i in $(seq 20 39); do
   echo "Request $i: FIB [$i]"
-  curl -s -X POST http://localhost:3000/compute \
+  e2e_start=$(get_time_ms)
+  response=$(curl -s -X POST http://localhost:3000/compute \
     -H "Content-Type: application/json" \
-    -d "{\"taskType\": \"fib\", \"data\": [$i]}" | jq .
+    -d "{\"taskType\": \"fib\", \"data\": [$i]}")
+  e2e_end=$(get_time_ms)
+  e2e_time=$((e2e_end - e2e_start))
+  echo "$response" | jq --arg e2e "$e2e_time" '. + {e2eTimeMs: ($e2e | tonumber)}'
   echo ""
 done
 

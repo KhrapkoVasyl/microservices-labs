@@ -12,6 +12,7 @@ export class ComputeRequestDto {
 export class ComputeResultDto {
   result: number;
   taskType: TaskType;
-  computationTimeMs: number;
-  requestTimeMs: number;
+  internalComputationTimeMs: number;
+  internalNetworkLatencyMs: number;
+  internalTotalTimeMs: number;
 }

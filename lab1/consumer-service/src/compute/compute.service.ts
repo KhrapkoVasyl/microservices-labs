@@ -1,55 +1,64 @@
 import { Injectable } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
 import { LoggerService } from '@common/logger';
 import { ConfigService } from '@common/config';
+import { AppHttpService } from '@common/http';
 import {
   ComputeRequestDto,
   ComputeResultDto,
   TaskType,
 } from './dto/compute.dto';
 
+interface ProviderResponse {
+  result: number;
+  taskType: TaskType;
+  computationTimeMs: number;
+}
+
 @Injectable()
 export class ComputeService {
+  private readonly providerUrl: string;
+
   constructor(
-    private readonly httpService: HttpService,
     private readonly logger: LoggerService,
     private readonly configService: ConfigService,
-  ) {}
+    private readonly httpService: AppHttpService,
+  ) {
+    this.providerUrl =
+      this.configService.get('PROVIDER_SERVICE_URL') || 'http://localhost:3001';
+  }
 
   async compute(dto: ComputeRequestDto): Promise<ComputeResultDto> {
-    const startTime = Date.now();
+    const startTime = performance.now();
 
-    this.logger.log('Sending compute request to provider', {
+    this.logger.debug('Sending compute request to provider', {
       taskType: dto.taskType,
-      dataLength: dto.data.length,
+      data: dto.data,
     });
 
-    const response = await firstValueFrom(
-      this.httpService.post<{
-        result: number;
-        taskType: TaskType;
-        computationTimeMs: number;
-      }>(
-        `${this.configService.get('PROVIDER_SERVICE_URL') || 'http://localhost:3001'}/compute`,
-        dto,
-      ),
+    const data = await this.httpService.post<ProviderResponse>(
+      `${this.providerUrl}/compute`,
+      dto,
     );
 
-    const requestTimeMs = Date.now() - startTime;
+    const internalTotalTimeMs = performance.now() - startTime;
+    const internalNetworkLatencyMs =
+      internalTotalTimeMs - data.computationTimeMs;
 
-    this.logger.log('Compute request completed', {
+    this.logger.debug('Compute request completed', {
       taskType: dto.taskType,
-      result: response.data.result,
-      computationTimeMs: response.data.computationTimeMs,
-      requestTimeMs,
+      data: dto.data,
+      result: data.result,
+      internalComputationTimeMs: data.computationTimeMs,
+      internalNetworkLatencyMs,
+      internalTotalTimeMs,
     });
 
     return {
-      result: response.data.result,
-      taskType: response.data.taskType,
-      computationTimeMs: response.data.computationTimeMs,
-      requestTimeMs,
+      result: data.result,
+      taskType: data.taskType,
+      internalComputationTimeMs: data.computationTimeMs,
+      internalNetworkLatencyMs,
+      internalTotalTimeMs,
     };
   }
 }
