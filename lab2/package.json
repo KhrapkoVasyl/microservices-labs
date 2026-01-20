@@ -1,0 +1,13 @@
+{
+  "name": "lab1",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "npm run build:provider && npm run build:consumer",
+    "build:provider": "cd provider-service && npm run build",
+    "build:consumer": "cd consumer-service && npm run build",
+    "start:provider": "cd provider-service && npm run start:dev",
+    "start:consumer": "cd consumer-service && npm run start:dev",
+    "docker:up": "docker-compose up --build",
+    "docker:down": "docker-compose down"
+  }
+}

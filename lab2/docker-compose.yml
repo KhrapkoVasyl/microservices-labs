@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  provider-service:
+    build:
+      context: ./provider-service
+      dockerfile: Dockerfile
+    container_name: provider-service
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+    networks:
+      - microservices-network
+
+  consumer-service:
+    build:
+      context: ./consumer-service
+      dockerfile: Dockerfile
+    container_name: consumer-service
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - PROVIDER_SERVICE_URL=http://provider-service:3001
+    depends_on:
+      - provider-service
+    networks:
+      - microservices-network
+
+networks:
+  microservices-network:
+    driver: bridge
