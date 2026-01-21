@@ -63,12 +63,12 @@ echo ""
 sleep 2
 
 echo "7. Getting FIB result..."
-curl -s "$BASE_URL_QUERY/compute/$TASK_ID" | jq .
+curl -s "$BASE_URL_QUERY/compute/tasks/$TASK_ID" | jq .
 echo ""
 
 # Get all tasks
 echo "8. Getting all tasks..."
-curl -s "$BASE_URL_QUERY/compute" | jq .
+curl -s "$BASE_URL_QUERY/compute/tasks" | jq .
 echo ""
 
 echo "=== Tests completed ==="
