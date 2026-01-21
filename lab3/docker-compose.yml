@@ -1,0 +1,136 @@
+version: "3.8"
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - microservices-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "kafka-topics",
+          "--bootstrap-server",
+          "localhost:9092",
+          "--list",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  mongo:
+    image: mongo:7
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  command-service:
+    build:
+      context: .
+      dockerfile: command-service/Dockerfile
+    container_name: command-service
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - KAFKA_BROKERS=kafka:9092
+      - KAFKA_TOPIC=compute-events
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - microservices-network
+
+  query-service:
+    build:
+      context: .
+      dockerfile: query-service/Dockerfile
+    container_name: query-service
+    ports:
+      - "8001:8001"
+    environment:
+      - PORT=8001
+      - MONGO_URL=mongodb://mongo:27017
+      - MONGO_DB=event_sourcing
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - microservices-network
+
+  compute-service:
+    build:
+      context: .
+      dockerfile: compute-service/Dockerfile
+    environment:
+      - KAFKA_BROKERS=kafka:9092
+      - KAFKA_TOPIC=compute-events
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - microservices-network
+    deploy:
+      replicas: 2
+
+  materializer-service:
+    build:
+      context: .
+      dockerfile: materializer-service/Dockerfile
+    container_name: materializer-service
+    environment:
+      - KAFKA_BROKERS=kafka:9092
+      - KAFKA_TOPIC=compute-events
+      - MONGO_URL=mongodb://mongo:27017
+      - MONGO_DB=event_sourcing
+    depends_on:
+      kafka:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    networks:
+      - microservices-network
+
+networks:
+  microservices-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
