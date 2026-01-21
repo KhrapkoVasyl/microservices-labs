@@ -1,6 +1,23 @@
 version: "3.8"
 
 services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=password
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   provider-service:
     build:
       context: ./provider-service
@@ -10,6 +27,10 @@ services:
       - "3001:3001"
     environment:
       - PORT=3001
+      - RABBITMQ_URL=amqp://user:password@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     networks:
       - microservices-network
 
@@ -23,8 +44,12 @@ services:
     environment:
       - PORT=3000
       - PROVIDER_SERVICE_URL=http://provider-service:3001
+      - RABBITMQ_URL=amqp://user:password@rabbitmq:5672
     depends_on:
-      - provider-service
+      rabbitmq:
+        condition: service_healthy
+      provider-service:
+        condition: service_started
     networks:
       - microservices-network
 

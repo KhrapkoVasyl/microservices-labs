@@ -8,6 +8,10 @@
     "start:provider": "cd provider-service && npm run start:dev",
     "start:consumer": "cd consumer-service && npm run start:dev",
     "docker:up": "docker-compose up --build",
-    "docker:down": "docker-compose down"
+    "docker:down": "docker-compose down",
+    "benchmark": "npx tsx tests/benchmark.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.0"
   }
 }

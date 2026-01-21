@@ -1,5 +1,5 @@
 {
-  "name": "lab1",
+  "name": "lab2",
   "version": "1.0.0",
   "scripts": {
     "build": "npm run build:provider && npm run build:consumer",
@@ -8,6 +8,11 @@
     "start:provider": "cd provider-service && npm run start:dev",
     "start:consumer": "cd consumer-service && npm run start:dev",
     "docker:up": "docker-compose up --build",
-    "docker:down": "docker-compose down"
+    "docker:down": "docker-compose down",
+    "test": "cd tests && ./test.sh",
+    "benchmark": "npx tsx tests/benchmark.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.0"
   }
 }
