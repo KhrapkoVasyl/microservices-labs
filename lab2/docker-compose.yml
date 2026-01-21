@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   rabbitmq:
     image: rabbitmq:3-management
@@ -22,9 +20,6 @@ services:
     build:
       context: ./provider-service
       dockerfile: Dockerfile
-    container_name: provider-service
-    ports:
-      - "3001:3001"
     environment:
       - PORT=3001
       - RABBITMQ_URL=amqp://user:password@rabbitmq:5672
@@ -33,6 +28,12 @@ services:
         condition: service_healthy
     networks:
       - microservices-network
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
 
   consumer-service:
     build:

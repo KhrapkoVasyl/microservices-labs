@@ -7,6 +7,7 @@ import {
   MessageProps,
 } from '@common/messaging';
 import { ComputeRequestDto } from './dto/compute.dto';
+import { INSTANCE_ID } from '../instance';
 
 @Injectable()
 export class ComputeConsumer implements OnModuleInit {
@@ -22,18 +23,18 @@ export class ComputeConsumer implements OnModuleInit {
   }
 
   private async consumeComputeMessage() {
-    this.logger.log('Starting compute queue listener');
+    this.logger.log(`[${INSTANCE_ID}] Starting compute queue listener`);
 
     await this.messagingService.consume<ComputeRequestDto>(
       async (message, props: MessageProps) => {
-        this.logger.debug('Processing compute request from queue', {
+        this.logger.log(`[${INSTANCE_ID}] Processing request`, {
           taskType: message.taskType,
           data: message.data,
         });
 
         const result = await this.computeService.compute(message);
 
-        this.logger.debug('Compute request processed', {
+        this.logger.log(`[${INSTANCE_ID}] Request completed`, {
           taskType: message.taskType,
           result: result.result,
           computationTimeMs: result.computationTimeMs,

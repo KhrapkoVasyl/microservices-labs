@@ -32,7 +32,6 @@ wait_for_service() {
   exit 1
 }
 
-wait_for_service "http://localhost:3001/health" "Provider Service"
 wait_for_service "http://localhost:3000/health" "Consumer Service"
 echo "All services are ready!"
 

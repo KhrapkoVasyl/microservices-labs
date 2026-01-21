@@ -7,8 +7,9 @@
     "build:consumer": "cd consumer-service && npm run build",
     "start:provider": "cd provider-service && npm run start:dev",
     "start:consumer": "cd consumer-service && npm run start:dev",
-    "docker:up": "docker-compose up --build",
+    "docker:up": "docker-compose up -d --build",
     "docker:down": "docker-compose down",
+    "docker:scale:example": "docker-compose up -d --scale provider-service=",
     "test": "cd tests && ./test.sh",
     "benchmark": "npx tsx tests/benchmark.ts"
   },
