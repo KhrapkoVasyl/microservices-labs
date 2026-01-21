@@ -57,17 +57,12 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
-    command: >
-      bash -c "
-        echo 'Creating topic compute-events with 3 partitions...'
-        kafka-topics --bootstrap-server kafka:9092 \
-          --create \
-          --if-not-exists \
-          --topic compute-events \
-          --partitions 3 \
-          --replication-factor 1
-        echo 'Topic created successfully!'
-      "
+    command:
+      [
+        "bash",
+        "-c",
+        "echo 'Creating topic compute-events with 3 partitions...' && kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic compute-events --partitions 3 --replication-factor 1 && echo 'Topic created successfully!'",
+      ]
     networks:
       - microservices-network
 
@@ -149,10 +144,15 @@ services:
       - microservices-network
     command: >
       mongosh --host mongo1:27017 --eval '
-        var status = rs.status();
-        if (status.ok === 1) {
-          print("Replica set already initialized, skipping...");
-        } else {
+        try {
+          var status = rs.status();
+          if (status.ok === 1) {
+            print("Replica set already initialized, skipping...");
+          } else {
+            throw new Error("Need to initialize");
+          }
+        } catch (e) {
+          print("Initializing replica set...");
           rs.initiate({
             _id: "rs0",
             members: [
