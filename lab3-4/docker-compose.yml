@@ -7,6 +7,9 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-log:/var/lib/zookeeper/log
     networks:
       - microservices-network
     healthcheck:
@@ -30,7 +33,9 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
     networks:
       - microservices-network
     healthcheck:
@@ -144,16 +149,21 @@ services:
       - microservices-network
     command: >
       mongosh --host mongo1:27017 --eval '
-        rs.initiate({
-          _id: "rs0",
-          members: [
-            { _id: 0, host: "mongo1:27017", priority: 2 },
-            { _id: 1, host: "mongo2:27017", priority: 1 },
-            { _id: 2, host: "mongo3:27017", priority: 1 }
-          ]
-        });
-        while (!rs.isMaster().ismaster) { sleep(1000); }
-        print("Replica set initialized successfully!");
+        var status = rs.status();
+        if (status.ok === 1) {
+          print("Replica set already initialized, skipping...");
+        } else {
+          rs.initiate({
+            _id: "rs0",
+            members: [
+              { _id: 0, host: "mongo1:27017", priority: 2 },
+              { _id: 1, host: "mongo2:27017", priority: 1 },
+              { _id: 2, host: "mongo3:27017", priority: 1 }
+            ]
+          });
+          while (!rs.isMaster().ismaster) { sleep(1000); }
+          print("Replica set initialized successfully!");
+        }
       '
     restart: "no"
 
@@ -240,3 +250,6 @@ volumes:
   mongo1-data:
   mongo2-data:
   mongo3-data:
+  kafka-data:
+  zookeeper-data:
+  zookeeper-log:
