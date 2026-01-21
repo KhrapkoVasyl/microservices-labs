@@ -1,0 +1,11 @@
+{
+  "name": "lab3-event-sourcing",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build",
+    "test": "bash tests/test.sh"
+  }
+}
